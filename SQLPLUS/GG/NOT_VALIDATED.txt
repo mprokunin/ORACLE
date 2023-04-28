@@ -1,0 +1,41 @@
+No unique key is defined for table TBG.LNE_ACCOUNTS.
+
+ 
+
+No unique key is defined for table TBG.LNE_ADD_AGR.
+                              No viable unique key is defined for table TBG.LNE_AGREEMENTS
+                              Unique key LNE_AGREEMENTS_UK1 for table TBG.LNE_AGREEMENTS cannot be used due to the inclusion of virtual columns, or nullable columns, or user-defined datatypes, or extended long varchar columns, or function-based index columns.
+
+
+023-04-25T14:58:30.111+0300  WARNING OGG-01896  Oracle GoldenGate Command Interpreter for Oracle:  Table TBG.LNE_AGR_PURPOSE has an identity column which is not supported. This table will be ignored by Extract.
+
+
+2023-04-25T14:58:31.506+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_COLLATERAL.  All viable columns will be logged.
+
+
+2023-04-25T14:58:31.757+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_COLLATERAL_ITEM.  All viable columns will be logged.
+
+2023-04-25T14:58:32.509+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_COLLAT_INSURANCE.  All viable columns will be logged.
+
+
+2023-04-25T14:58:33.682+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_CONDITIONS.  All viable columns will be logged.
+
+ 
+
+
+2023-04-25T14:58:34.761+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_OPERATION.  All viable columns will be logged.
+
+2023-04-25T14:58:34.907+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_OPERATION_CHARGED.  All viable columns will be logged.
+
+
+2023-04-25T14:58:35.765+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_RATE.  All viable columns will be logged.
+
+ 
+
+2023-04-25T14:58:36.542+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_SCHEDULE.  All viable columns will be logged.
+
+
+2023-04-25T14:58:36.873+0300  INFO    OGG-15130  Oracle GoldenGate Command Interpreter for Oracle:  No key found for table FXLT1.TBG.LNE_SCHEDULE_HIST.  All viable columns will be logged.
+
+
+ 

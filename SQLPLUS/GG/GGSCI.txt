@@ -1,0 +1,221 @@
+-- На источнике (FXLT1) 
+-- Доп. установки в ROOT и контейнерной базе 
+
+SQL> alter session set container = CDB$ROOT;
+
+Session altered.
+
+SQL> ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
+
+Database altered.
+
+SQL> ALTER SYSTEM SET ENABLE_GOLDENGATE_REPLICATION=TRUE SCOPE=BOTH;
+
+System altered.
+
+
+SQL> show pdbs
+
+    CON_ID CON_NAME                       OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+         2 PDB$SEED                       READ ONLY  NO
+         3 FXLT1                          READ WRITE NO
+
+SQL> alter session set container = FXLT1;
+
+Session altered.
+
+SQL> ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
+
+Database altered.
+
+-- На приемнике (DWH_TST)
+oracle@solaris:~$ sqlplus / as sysdba
+
+SQL> ALTER SYSTEM SET ENABLE_GOLDENGATE_REPLICATION=TRUE SCOPE=BOTH;
+
+System altered.
+
+SQL> ALTER DATABASE FORCE LOGGING;
+
+ 
+ Database altered.
+
+
+
+
+
+
+
+From here:
+
+https://www.oracle.com/webfolder/technetwork/tutorials/obe/fmw/goldengate/12c/OGG12c_Integrated_Replicat/index.html
+
+-- Подключаемся к источнику как system
+
+[oracle@bksli-abs-dlsgg-test 21.3.0]$ ./ggsci
+
+-- Root
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 1> DBLOGIN USERID system@172.27.4.30:1521/FXLTCDB password xxx
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as  as system@FXLTCDB/CDB$ROOT) 2> MININGDBLOGIN USERID system@172.27.4.30:1521/FXLTCDB, password xxx
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 3> REGISTER EXTRACT FXLT1DWH DATABASE CONTAINER (FXLT1)
+
+2023-03-18 00:04:42  INFO    OGG-02003  Extract group FXLT1DWH successfully registered with database at SCN 8963000830335.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 4> ADD EXTRACT FXLT1DWH INTEGRATED TRANLOG BEGIN NOW
+Integrated Extract added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 5> ADD EXTTRAIL /u03/dirdat/ft , EXTRACT FXLT1DWH
+EXTTRAIL added.
+
+--GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 6> ADD CHECKPOINTTABLE FXLT1.prokunin_dba.chkptab
+
+--Successfully created checkpoint table FXLT1.prokunin_dba.chkptab.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 7> EDIT PARAMS FXLT1DWH
+
+EXTRACT FXLT1DWH
+USERID system@172.27.4.30:1521/FXLTCDB, PASSWORD xxx
+TRANLOGOPTIONS MININGUSER system@172.27.4.30:1521/FXLTCDB MININGPASSWORD xxx
+EXTTRAIL /u03/dirdat/ft
+TABLE FXLT1.PROKUNIN_DBA.TST_TAB;
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 8> START FXLT1DWH
+
+--- Replicat
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 8> ADD REPLICAT DWHTST NODBCHECKPOINT EXTTRAIL /u03/dirdat/ft
+Replicat added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 9> edit params DWHTST
+REPLICAT DWHTST
+ASSUMETARGETDEFS
+USERID system@//10.31.209.183:1521/DWH_TST, PASSWORD xxx
+MAP fxlt1.prokunin_dba.tst_tab, TARGET  prokunin_dba.tst_tab;
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 10> START DWHTST
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 11> info all
+
+Program     Status      Group       Lag at Chkpt  Time Since Chkpt
+
+MANAGER     RUNNING
+EXTRACT     RUNNING     FXLT1DWH    00:00:03      00:00:05
+REPLICAT    RUNNING     DWHTST      00:00:00      00:00:04
+
+
+
+
+--------------------- Когда minerDB на отдельном сервере 172.27.4.32
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 1> DBLOGIN USERID system@172.27.4.30:1521/FXLTCDB password xxx
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 2> MININGDBLOGIN USERID system@//172.27.4.32:1521/MINERDB, password xxx
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 3> REGISTER EXTRACT FXLT1DWH DATABASE CONTAINER (FXLT1)
+
+2023-04-25 22:31:59  INFO    OGG-02003  Extract group FXLT1DWH successfully registered with database at SCN 8967017671224.
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 4> ADD EXTRACT FXLT1DWH INTEGRATED TRANLOG BEGIN NOW
+Integrated Extract added.
+
+--GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 5> ADD CHECKPOINTTABLE FXLT1.prokunin_dba.chkptab
+
+--Successfully created checkpoint table FXLT1.prokunin_dba.chkptab.
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 6> ADD EXTTRAIL /u03/dirdat/sb , EXTRACT FXLT1DWH
+EXTTRAIL added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 7> EDIT PARAMS FXLT1DWH
+
+EXTRACT FXLT1DWH
+USERID system@172.27.4.30:1521/FXLTCDB, PASSWORD xxx
+TRANLOGOPTIONS MININGUSER system@172.27.4.30:1521/FXLTCDB MININGPASSWORD xxx
+--TRANLOGOPTIONS INTEGRATEDPARAMS (downstream_real_time_mine N)
+EXTTRAIL /u03/dirdat/sb
+TABLE FXLT1.PROKUNIN_DBA.TST_TAB;
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 8> START FXLT1DWH
+
+Sending START request to Manager ...
+Extract group FXLT1DWH starting.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 9> ADD REPLICAT DWHTST NODBCHECKPOINT EXTTRAIL /u03/dirdat/sb
+Replicat added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 10> edit params DWHTST
+REPLICAT DWHTST
+ASSUMETARGETDEFS
+USERID system@//10.31.209.183:1521/DWH_TST, PASSWORD xxx
+MAP fxlt1.prokunin_dba.tst_tab, TARGET  prokunin_dba.tst_tab;
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 11> start DWHTST
+
+Sending START request to Manager ...
+Replicat group DWHTST starting.
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 12> edit params mgr  
+PORT 7809
+PURGEOLDEXTRACTS /u03/dirdat/sd , USECHECKPOINTS, MINKEEPDAYS 5
+
+
+[oracle@bksli-abs-dlsgg-test 21.3.0]$ ./extract pf dirprm/outfxlt.prm rf dirrpt/outfxlt.prm
+[oracle@bksli-abs-dlsgg-test 21.3.0]$ ./replicat pf dirprm/loaddwh.prm rf dirrpt/loaddwh.rpt
+
+
+-------------------- To unregister Extract at FXLST1
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan) 1> DBLOGIN USERID system@172.27.4.30:1521/FXLTCDB password xxx
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 2> MININGDBLOGIN USERID system@172.27.4.30:1521/FXLTCDB, password xxx
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 3> stop FXLT1DWH
+
+Sending STOP request to Extract group FXLT1DWH ...
+Request processed.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 16> delete EXTRACT FXLT1DWH
+
+
+2023-03-27 18:35:17  WARNING OGG-14064  Could not delete heartbeat table entries for  group name FXLT1DWH: ().
+Extract group FXLT1DWH deleted.
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 4> UNREGISTER EXTRACT FXLT1DWH DATABASE
+
+2023-03-23 19:16:55  INFO    OGG-01750  Successfully unregistered Extract group FXLT1DWH from database.
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 5> stop DWHTST
+Sending STOP request to Replicat group DWHTST ...
+Request processed.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 6> delete replicat DWHTST
+Replicat group DWHTST deleted.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 18> DELETE CHECKPOINTTABLE FXLT1.prokunin_dba.chkptab
+This checkpoint table may be required for other installations.  Are you sure you want to delete this checkpoint table? y
+Error: OCI Error ORA-00942: table or view does not exist
+ (status = 942). Dropping checkpoint table prokunin_dba.chkptab, SQL <DROP TABLE prokunin_dba.chkptab>
+
+
+
+--- Таблица для тестов на базе-источнике
+create table PROKUNIN_DBA.TST_TAB
+(
+  col1     integer      not null,
+  col2	   varchar2(20),
+  PRIMARY KEY(col1)
+);
+
+COMMENT ON TABLE "PROKUNIN_DBA"."TST_TAB"  IS 'Таблица для тестирования GG';
+
+create table prokunin_dba.tst_tab2 (col1 integer not null, col2 varchar(10), col3 varchar(20), primary key(col1));
+
+COMMENT ON TABLE "PROKUNIN_DBA"."TST_TAB2"  IS 'Таблица2 для тестирования GG';
+
+

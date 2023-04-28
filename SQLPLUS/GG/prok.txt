@@ -1,0 +1,75 @@
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 1> DBLOGIN USERID system@172.27.4.30:1521/FXLTCDB password xxx
+Successfully logged into database CDB$ROOT.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 2>  MININGDBLOGIN USERID system@//172.27.4.32:1521/MINERDB, password xxx
+Successfully logged into mining database.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 3> REGISTER EXTRACT FXLPROK DATABASE CONTAINER(FXLT1)
+
+2023-04-25 22:29:09  INFO    OGG-02003  Extract group FXLPROK successfully registered with database at SCN 8967017632057.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 4> ADD EXTRACT FXLPROK INTEGRATED TRANLOG BEGIN NOW
+Integrated Extract added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 5> ADD EXTTRAIL /u03/dirdat/pp, EXTRACT FXLPROK
+EXTTRAIL added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 6> EDIT PARAMS FXLPROK
+
+EXTRACT FXLPROK
+USERID system@172.27.4.30:1521/FXLTCDB, PASSWORD U60XwSug17335
+TRANLOGOPTIONS MININGUSER system@//172.27.4.32:1521/MINERDB, MININGPASSWORD U60XwSug17335
+TRANLOGOPTIONS CHECKPOINTRETENTIONTIME 0.04
+EXTTRAIL /u03/dirdat/sp
+TABLE FXLT1.PROKUNIN_DBA.TST_TAB;
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 7> START FXLPROK
+
+Sending START request to Manager ...
+Extract group FXLPROK starting.
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 8> ADD REPLICAT DWHPROK NODBCHECKPOINT EXTTRAIL /u03/dirdat/pp
+Replicat added.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 9> EDIT PARAMS DWHPROK
+
+REPLICAT DWHPROK
+ASSUMETARGETDEFS
+SOURCECHARSET PASSTHRU
+USERID tbg@//10.31.209.183:1521/DWH_TST, PASSWORD Qj46yWK5SN
+HANDLECOLLISIONS
+MAP FXLT1.PROKUNIN_DBA.TST_TAB, TARGET PROKUNIN_DBA.TST_TAB;
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 10> start DWHPROK
+
+Sending START request to Manager ...
+Replicat group DWHPROK starting.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 11>  info all
+
+Program     Status      Group       Lag at Chkpt  Time Since Chkpt
+
+MANAGER     RUNNING
+EXTRACT     RUNNING     FXLPROK     00:00:00      00:06:18
+REPLICAT    RUNNING     DWHPROK     00:00:00      00:00:08
+
+
+----------------
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 12> DELETE EXTRACT FXLPROK
+
+(null)
+
+2023-04-19 16:10:37  WARNING OGG-14064  Could not delete heartbeat table entries for  group name FXLPROK: ().
+Extract group FXLPROK deleted.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 13> unregister extract FXLPROK database
+
+
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 14> stop DWHPROK
+Sending STOP request to Replicat group DWHPROK ...
+Request processed.
+
+GGSCI (bksli-abs-dlsgg-test.ffb.lan as system@FXLTCDB/CDB$ROOT) 15> delete replicat DWHPROK
+Replicat group DWHPROK deleted.
